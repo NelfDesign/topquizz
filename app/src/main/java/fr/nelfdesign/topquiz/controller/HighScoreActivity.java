@@ -1,8 +1,6 @@
 package fr.nelfdesign.topquiz.controller;
 
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,7 +15,6 @@ import fr.nelfdesign.topquiz.R;
 import fr.nelfdesign.topquiz.model.HighScore;
 import fr.nelfdesign.topquiz.model.User;
 
-import static java.lang.System.out;
 
 public class HighScoreActivity extends AppCompatActivity {
 
@@ -51,18 +48,19 @@ public class HighScoreActivity extends AppCompatActivity {
         textViewList.add(mPlayer4);
         textViewList.add(mPlayer5);
 
-        // Get back the table of score
+        // on récupère l'extra score
         Intent i = getIntent();
         mHighScore = (HighScore) i.getSerializableExtra("Scores");
 
-        // Sort out the scores of the biggest in the smallest
-        // Creation of the table of 5 better scores
-        ArrayList<User> scoresFive = createFiveTab();
+        // Creation d'une table des 5 meilleurs
+        ArrayList<User> scoresFive = Utilities.tableau5Scores(mHighScore);
         Collections.sort(scoresFive,new User());
         Collections.reverse(scoresFive);
 
-        // Updates the display of the table of the scores
-        if (mHighScore != null) updateScoresTab(mHighScore.getScoresTab());
+        // on update la table highScore
+        if (mHighScore != null){
+           Utilities.updateTab(mHighScore.getScoresTab(), textViewList);
+        }
 
         // Bouton permettant le tri par rapport au score
         btn_score.setOnClickListener(new View.OnClickListener() {
@@ -70,17 +68,16 @@ public class HighScoreActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 if (mHighScore != null) {
-
-                    // Creation of the table of 5 better scores
+                    // Creation de la table des 5 meilleurs
                     ArrayList<User> scoresFive;
-                    scoresFive = createFiveTab();
+                    scoresFive = Utilities.tableau5Scores(mHighScore);
 
                     // Sort out the scores of the biggest in the smallest
                     Collections.sort(scoresFive,new User());
                     Collections.reverse(scoresFive);
 
                     // Display the scores tab
-                    updateScoresTab(scoresFive);
+                   Utilities.updateTab(scoresFive, textViewList);
                 }
             }
         });
@@ -91,61 +88,15 @@ public class HighScoreActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 if (mHighScore != null) {
-
-                    // Creation of the table of 5 better scores
+                    // Creation de la table des 5 meilleurs scores
                     ArrayList<User> scoresFive;
-                    scoresFive = createFiveTab();
-
+                    scoresFive = Utilities.tableau5Scores(mHighScore);
                     // Sort the scores tab by name
                     Collections.sort(scoresFive);
-
                     // Display the scores tab
-                    updateScoresTab(scoresFive);
+                    Utilities.updateTab(scoresFive, textViewList);
                 }
             }
         });
-    }
-
-    // Method for the creation of the table of 5 better scores
-    private ArrayList<User> createFiveTab() {
-
-        ArrayList<User> scoresFive = new ArrayList<User>();
-
-        // On trie préalablement la liste afin d'avoir le score le plus élevé en début
-        // de list et le score le moins élevé en fin de liste
-        // Sort out the scores of the biggest in the smallest
-        Collections.sort(mHighScore.getScoresTab(),new User());
-        Collections.reverse(mHighScore.getScoresTab());
-
-        // On conserve uniquement les 5 premiers postes du tableau de score
-        for (int i = 0;i<mHighScore.getScoresTab().size();i++){
-            out.println("index = "+i);
-            scoresFive.add(mHighScore.getScoresTab().get(i));
-        }
-        return scoresFive;
-    }
-
-    // Methode qui met à jour l'affichage du tableau de scores
-    private void updateScoresTab(List<User> userList) {
-
-        String name;
-        int score, index = 0;
-
-        for (TextView textView : textViewList) {
-            if (index < userList.size() ) {
-                if (userList.get(index) != null) {
-                    name = userList.get(index).getFirstname();
-                    score = userList.get(index).getScore();
-
-                    textView.setText(name.toUpperCase() + " => " + score + " points");
-                }
-            } else {
-                textView.setText("    " + "-" + "  " + "unknown");
-
-                textView.setTextColor(Color.GRAY);
-                textView.setTypeface(Typeface.DEFAULT,Typeface.ITALIC);
-            }
-            index++;
-        }
     }
 }

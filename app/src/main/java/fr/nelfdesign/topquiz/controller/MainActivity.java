@@ -1,13 +1,11 @@
 package fr.nelfdesign.topquiz.controller;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,14 +14,9 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import fr.nelfdesign.topquiz.R;
 import fr.nelfdesign.topquiz.model.HighScore;
 import fr.nelfdesign.topquiz.model.User;
-
-import static java.lang.System.out;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
     public static final String PREF_KEY_SCORE = "PREF_KEY_SCORE";
     public static final String PREF_KEY_FIRSTNAME = "PREF_KEY_FIRSTNAME";
     public static final String PREF_KEY_SCORETAB = "PREF_KEY_SCORETAB";
-    public static final String BUNDLE_SCORES = "BUNDLE_SCORES";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,14 +55,7 @@ public class MainActivity extends AppCompatActivity {
             mHighScore = new HighScore();
             btn_score.setEnabled(false);
         }
-        out.println("Tableau des scores dans les préférences");
-        for (User user : mHighScore.getScoresTab()){
-            out.println(user.getFirstname()+" "+user.getScore());
-        }
 
-        // On crée un nouvel objet User qui contiendra
-        // les informations concernant le précédent joueur
-        // ==> celui sauvegardé dans le téléphone
         mUser = new User();
         // On récupère le nom du joueur
         mUser.setFirstname(mSharedPreferences.getString(PREF_KEY_FIRSTNAME, null));
@@ -80,17 +65,12 @@ public class MainActivity extends AppCompatActivity {
             mUser.setScore(mSharedPreferences.getInt(PREF_KEY_SCORE, 0));
 
             // On affiche le nom et le score du joueur
-            JoueurConnu();
-
-            // Active le bouton de jeu
-            btn.setEnabled(true);
+            Utilities.JoueurConnu(mUser, textView, edit, btn);
         }
-
 
         edit.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -98,54 +78,45 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) { }
         });
 
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), GameActivity.class);
-                startActivityForResult(intent,GAME_REQUEST_CODE);
+                startActivityForResult(intent, GAME_REQUEST_CODE);
             }
         });
-
 
         btn_score.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent highScoreIntent = new Intent(getApplicationContext(), HighScoreActivity.class);
-                // Put the scores tab to ScoresActivity
+                // on envoie les scores à l'application
                 highScoreIntent.putExtra("Scores", mHighScore);
                 startActivity(highScoreIntent);
             }
         });
-
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (GAME_REQUEST_CODE == requestCode && RESULT_OK == resultCode){
             int score = data.getIntExtra(GameActivity.BUNDLE_REQUEST_CODE, 0);
-            // On crée un nouvel objet User qui contiendra les informations
-            // du nouveau joueur : son nom et son score
+            // On crée un nouveau  User pour stocker le nom et le score du joueur
             mUser = new User();
-
-            // Save the name of the player
+            //on attribut le nom
             mUser.setFirstname(edit.getText().toString().toLowerCase());
-            // Put the player's name in the preferences
+            // on le met dans les preferences
             mSharedPreferences.edit().putString(PREF_KEY_FIRSTNAME, mUser.getFirstname()).apply();
-
-            // Save the score of the player in the User Object
+            //idem score
             mUser.setScore(score);
-            // Put the score of the player in the preferences
             mSharedPreferences.edit().putInt(PREF_KEY_SCORE, score).apply();
-
-            // Add the new player and his score in table scores
+            //on ajoute le tout dans highScore
             mHighScore.addScore(mUser);
 
-            // Put the table scores in the preferences
-            //------------------------------------------------------------
+            // on crée un Json pour pouvoir stocker les données dansles prefs
             final Gson gson = new GsonBuilder()
                     .serializeNulls()
                     .disableHtmlEscaping()
@@ -153,26 +124,9 @@ public class MainActivity extends AppCompatActivity {
             String json = gson.toJson(mHighScore);
 
             mSharedPreferences.edit().putString(PREF_KEY_SCORETAB, json).apply();
-            //------------------------------------------------------------
-
-            // Un joueur et son score sont maintenant disponible, on active le bouton
-            // permettant de visualiser le tableau des scores
-            btn_score.setEnabled(true);
 
             // On affiche les informations sur le joueur actuel
-            JoueurConnu();
+            Utilities.JoueurConnu(mUser, textView, edit, btn_score);
         }
-    }
-
-    private void JoueurConnu() {
-
-        // On affiche le message récapitulatif
-        String fulltext = "Bon retour, " + mUser.getFirstname()
-                + "!\nTon dernier score était de : " + mUser.getScore()
-                + ", Feras-tu mieux cette fois-ci ?";
-        textView.setText(fulltext);
-        edit.setText(mUser.getFirstname());
-        edit.setSelection(mUser.getFirstname().length());
-        btn.setEnabled(true);
     }
 }
